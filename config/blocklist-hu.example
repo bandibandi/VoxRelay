@@ -1,0 +1,23 @@
+# Hallucination blocklist
+#
+# Whisper learned from subtitled videos, so it sometimes makes up subtitle
+# studio names or sign off phrases during silence. The VAD handles most of
+# this; this list is the second line of defense for the rest.
+#
+# Comparison ignores accents and punctuation, using partial match:
+# if the line appears anywhere in the sentence, the sentence is dropped.
+# Be careful with short patterns, since they can filter out real text too.
+
+Feliratok
+Felirat
+Amara.org
+subtitles
+Subtitles by
+A feliratot keszitette
+Fordította
+Köszönöm a figyelmet
+Köszönjük a figyelmet
+Viszontlátásra
+Legyen szép napja
+Iratkozz fel
+Kösz a nézést

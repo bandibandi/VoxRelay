@@ -1,0 +1,10 @@
+# Install with: pip install -r requirements.txt
+sounddevice
+numpy
+evdev
+faster-whisper
+
+# GPU acceleration (device = "cuda" in config.toml) also needs these.
+# Leave them commented out if you're running on CPU (device = "cpu").
+# nvidia-cublas-cu12
+# nvidia-cudnn-cu12

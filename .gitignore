@@ -1,0 +1,23 @@
+# Personal config and data, not meant to be published.
+# Copy the matching *.example file to the real name and fill in your own
+# values/words (e.g. config/dictionary-hu.example -> config/dictionary.txt).
+config/config.toml
+config/dictionary.txt
+config/blocklist.txt
+config/profanity.txt
+config/commands.toml
+transcript_log.txt
+command_log.txt
+command_output.txt
+
+# Old, pre-existing whisperd project files kept for reference only.
+old/
+
+# Internal dev notes, not meant to be published.
+voice_recorder_review.md
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/

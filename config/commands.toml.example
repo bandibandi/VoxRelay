@@ -1,0 +1,50 @@
+# Voice commands
+#
+# Each line maps a spoken phrase to a shell command. When you hold the
+# command key and say one of these phrases, a confirmation dialog shows
+# what you said and what would run, and the command only executes if you
+# approve it.
+#
+# Matching is exact but forgiving: case, accents, punctuation and spacing
+# are ignored, so "Middleware run" matches "middleware run."
+#
+# If you say something that has no entry here yet, a dialog asks what
+# command it should map to, and the answer is appended to this file
+# automatically.
+
+# --- Docker ---
+"docker list" = "docker ps -a"
+"docker images" = "docker images"
+"middleware run" = "docker compose -f middleware.yml up -d"
+"compose down" = "docker compose down"
+
+# --- System ---
+"disk space" = "df -h"
+"memory" = "free -h"
+"top processes" = "ps aux --sort=-%cpu | head -20"
+"gpu status" = "nvidia-smi"
+"temperatures" = "sensors"
+"uptime" = "uptime"
+
+# --- Network ---
+"network status" = "ip -brief address"
+"tailscale status" = "tailscale status"
+"open ports" = "ss -tulpn"
+
+# --- Git ---
+"git status" = "git status"
+"git log" = "git log --oneline -15"
+"git branches" = "git branch -a"
+
+# --- Laravel ---
+"artisan migrate status" = "php artisan migrate:status"
+"artisan routes" = "php artisan route:list"
+"run tests" = "php artisan test"
+
+# --- Services ---
+"open logs" = "journalctl --user -n 50 --no-pager"
+"follow logs" = "journalctl --user -f"
+"list services" = "systemctl --user list-units --type=service"
+
+# --- Packages ---
+"updatable packages" = "apt list --upgradable"

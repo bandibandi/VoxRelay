@@ -1,0 +1,18 @@
+# Profanity filter
+#
+# Personal list. Write SINGLE words here, one per line, not phrases made
+# of several words, because the Transcriber checks each word separately
+# and censors matches in place, rather than dropping the whole sentence
+# like blocklist.txt does. Partial match, ignoring accents and punctuation.
+# Extend freely.
+
+fenébe
+franc
+rohadt
+nyavalyába
+rézangyalát
+keservit
+mindenit
+búsba
+csuda
+rosseb

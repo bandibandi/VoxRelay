@@ -1,0 +1,66 @@
+# Setup: copy this file to config/config.toml, then also copy your
+# language's dictionary-*.example, blocklist-*.example and
+# profanity-*.example to config/dictionary.txt, config/blocklist.txt and
+# config/profanity.txt. Those real filenames are gitignored, so your
+# personal edits never end up in version control.
+
+# --- Whisper model ---
+model = "large-v3-turbo"
+# "cuda" + "float16" is much faster but needs an Nvidia GPU and the
+# nvidia-* pip packages. Without those, keep "cpu" + "int8".
+device = "cpu"
+compute_type = "int8"
+offline_mode = false
+# Whisper language code (e.g. "hu", "en"). See dictionary/blocklist/profanity
+# *-hu.example and *-en.example files below for matching content examples.
+language = "hu"
+
+# --- Audio recording ---
+sample_rate = 16000
+min_recording_ms = 300
+vad_min_silence_ms = 300
+vad_speech_pad_ms = 200
+
+# --- Button / device ---
+# The exact evdev device name of your keyboard/mouse. Find yours with:
+#   python3 -c "from evdev import list_devices, InputDevice; [print(InputDevice(p).name) for p in list_devices()]"
+keyboard_name = "Your Keyboard Name Here"
+# A standard key name (e.g. "KEY_RIGHTCTRL") or a hex scancode (e.g. "0xcff06")
+# for a vendor-specific macro button. Standard keys are easier to start with.
+key = "KEY_RIGHTCTRL"
+
+# --- Voice commands (optional second button) ---
+# A separate key/scancode that, instead of dictating text, matches the
+# transcribed phrase against config/commands.toml and offers to run the
+# matching shell command (or asks you to define one, if none matches yet).
+use_commands = true
+command_key = "KEY_RIGHTALT"
+commands_file = "config/commands.toml"
+
+# --- Text injection ---
+inject_method = "xdotool"
+
+# --- Dictionary (initial_prompt) ---
+use_dictionary = true
+dictionary = "config/dictionary.txt"
+prompt_token_budget = 224
+tokens_per_word = 2.4
+
+# --- Filtering (hallucination / profanity) ---
+use_blocklist = true
+blocklist = "config/blocklist.txt"
+use_profanity = true
+profanity = "config/profanity.txt"
+
+# --- Transcript saving ---
+save_transcript = true
+transcript_file = "transcript_log.txt"
+save_command_log = true
+command_log_file = "command_log.txt"
+command_output_file = "command_output.txt"
+run_in_terminal = true
+
+# --- Sound feedback ---
+sound_start = "/usr/share/sounds/freedesktop/stereo/dialog-information.oga"
+sound_stop = "/usr/share/sounds/freedesktop/stereo/complete.oga"
+sound_error = "/usr/share/sounds/freedesktop/stereo/dialog-warning.oga"

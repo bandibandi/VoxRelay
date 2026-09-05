@@ -1,0 +1,20 @@
+# Hallucination blocklist
+#
+# Whisper learned from subtitled videos, so it sometimes makes up subtitle
+# studio names or sign off phrases during silence. The VAD handles most of
+# this; this list is the second line of defense for the rest.
+#
+# Comparison ignores accents and punctuation, using partial match:
+# if the line appears anywhere in the sentence, the sentence is dropped.
+# Be careful with short patterns, since they can filter out real text too.
+
+Thanks for watching
+Thank you for watching
+Please subscribe
+Don't forget to subscribe
+Subtitles by
+Amara.org
+www.opensubtitles.org
+See you next time
+Bye for now
+Like and subscribe
