@@ -1,13 +1,11 @@
 FilamentPHP
-Upwork
 Blade
 configuration
-token
 PHPStorm
 GitHub
 threading
 xdotool
-whisperd
+VoxRelay
 Proxmox
 evdev
 composer
@@ -22,8 +20,6 @@ Pest
 query
 deployment
 entity
-config
-API
 subprocess
 venv
 PHPUnit
@@ -31,7 +27,6 @@ dictionary
 staging
 keypress
 gitignore
-deployment
 migration
 Whisper
 webhook
@@ -48,13 +43,13 @@ Eloquent
 database
 microphone
 component
-cache
 Alpine.js
 GPU
 keycode
 refactoring
 Tailscale
 Livewire
-JSON
 tomllib
 recorder
+artisan
+cublas

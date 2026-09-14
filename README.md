@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.jpg" alt="VoxRelay, local push-to-talk dictation and voice commands" width="100%">
+</p>
+
 # VoxRelay
 
 **Offline, privacy-first voice dictation and voice commands for Linux.**
