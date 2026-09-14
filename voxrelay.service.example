@@ -1,0 +1,42 @@
+# Runs VoxRelay in the background and starts it automatically when you log in.
+# This is a systemd *user* service, not a system one: VoxRelay needs a running
+# graphical session to type into, so starting it at boot would be too early.
+#
+# See the Autostart section of README.md for the install commands.
+
+[Unit]
+Description=VoxRelay, offline push-to-talk dictation and voice commands
+# graphical-session.target would be the natural trigger here, but several
+# desktops never activate it (Cinnamon is one), and the service would then
+# never start at all. default.target fires on login everywhere.
+After=default.target
+
+[Service]
+Type=simple
+
+# Both of these are required. VoxRelay resolves config/config.toml and its
+# log files relative to the project directory, so without WorkingDirectory it
+# exits immediately with a FileNotFoundError.
+WorkingDirectory=/path/to/VoxRelay
+ExecStart=/path/to/venv/bin/python /path/to/VoxRelay/voxrelay.py
+
+Restart=always
+# Deliberately not a short delay. The most likely reason for a failed start is
+# that something else is holding the GPU (a game, another model), and loading
+# the model burns a few seconds of CPU before it gives up. Retrying every few
+# seconds would then pin a core for as long as the GPU stays busy, while this
+# still recovers on its own within half a minute.
+RestartSec=30
+
+# Typing into other windows needs an X11 display, and not every desktop
+# exports these variables into the systemd user session. Adjust :0 if your
+# display differs, or delete both lines if your session already provides them.
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=%h/.Xauthority
+
+# Keep the downloaded Whisper model in the usual cache directory, otherwise
+# it gets fetched again on every start.
+Environment=HF_HOME=%h/.cache/huggingface
+
+[Install]
+WantedBy=default.target

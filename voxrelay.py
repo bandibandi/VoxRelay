@@ -39,6 +39,8 @@ with open("config/config.toml", "rb") as f:
 if CONFIG.get("offline_mode"):
     os.environ["HF_HUB_OFFLINE"] = "1"
 
+DIALOG_PYTHON = CONFIG.get("dialog_python", "/usr/bin/python3")
+
 
 def beep(kind: str) -> None:
     import subprocess
@@ -345,7 +347,9 @@ class CommandRunner:
     def _dialog(self, phrase: str, command: str = "", ask: bool = False) -> tuple[bool, str]:
         import subprocess
         script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dialog.py")
-        args = ["python3", script, "--phrase", phrase]
+        # The system interpreter, not whichever python3 happens to be on PATH:
+        # dialog.py needs the distro's GTK bindings, which a virtualenv lacks.
+        args = [DIALOG_PYTHON, script, "--phrase", phrase]
         if ask:
             args.append("--ask")
         else:

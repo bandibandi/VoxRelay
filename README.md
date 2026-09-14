@@ -1,11 +1,50 @@
 # VoxRelay
 
-A local, push-to-talk voice dictation and voice-command tool for Linux.
-Hold a key, speak, release it, and it types out what you said using
-[faster-whisper](https://github.com/SYSTRAN/faster-whisper) running
-entirely on your machine (no audio ever leaves it). A second key can
-run pre-approved shell commands by voice, with a confirmation dialog
-before anything executes.
+**Offline, privacy-first voice dictation and voice commands for Linux.**
+Hold a key, speak, release it, and your words get typed straight into
+the focused window. No cloud, no API keys, no subscription, no audio
+ever leaves your machine.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
+![Platform: Linux (X11)](https://img.shields.io/badge/platform-Linux%20(X11)-lightgrey)
+
+VoxRelay is built on [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
+running entirely on your own hardware. A second, separate hotkey turns
+spoken phrases into pre-approved shell commands, run only after you
+confirm them in a popup, making it a hands-free way to drive a
+terminal as well as a text editor.
+
+> **Read this first: VoxRelay needs an X11 session.**
+> Typing into other windows relies on `xdotool` and `xclip`, and Wayland
+> blocks that kind of cross-application input by design. Check what you
+> are running with:
+>
+> ```bash
+> echo $XDG_SESSION_TYPE
+> ```
+>
+> If it prints `x11` you are good to go. If it prints `wayland`, VoxRelay
+> will not be able to type anything yet, so either switch your session to
+> X11 at the login screen (where your desktop still offers it) or wait for
+> Wayland support. See [Known limitations](#known-limitations).
+
+## Why VoxRelay
+
+Most voice typing tools (Wispr Flow, Otter, Dragon, Windows/macOS
+built-in dictation) send your audio to a server somewhere. VoxRelay
+never does, everything, from the speech-to-text model to the voice
+command execution, runs locally:
+
+- **100% offline** once the model is downloaded, no network calls,
+  no telemetry
+- **Push-to-talk voice typing** into any focused window, not just a
+  browser extension or a single app
+- **Voice-driven shell commands**, say a phrase, review the exact
+  command in a confirmation dialog, approve or cancel
+- **Runs on CPU or GPU**, an Nvidia card speeds things up but isn't
+  required
+- **Open source, MIT licensed**, read every line it runs
 
 ## Features
 
@@ -36,17 +75,33 @@ before anything executes.
 ## Setup
 
 ```bash
-git clone <this repo>
-cd voxrelay
+git clone https://github.com/bandibandi/VoxRelay.git
+cd VoxRelay
 ./setup.sh                        # copies config files, checks dependencies
-pip install -r requirements.txt
-python3 voxrelay.py
+
+# Recent Debian and Ubuntu based distros refuse pip installs into the system
+# interpreter, so keep the dependencies in a virtualenv of their own.
+python3 -m venv ~/.local/share/voxrelay/venv
+~/.local/share/voxrelay/venv/bin/pip install -r requirements.txt
+
+~/.local/share/voxrelay/venv/bin/python voxrelay.py
+```
+
+On an Nvidia GPU, add the CUDA libraries to that same virtualenv:
+
+```bash
+~/.local/share/voxrelay/venv/bin/pip install nvidia-cublas-cu12 nvidia-cudnn-cu12
 ```
 
 `setup.sh` copies the `.example` config files into place (they're
 gitignored so your personal edits never get committed) and reports
 any missing system tool. It does not install system packages for you,
 follow the hints it prints (usually `sudo apt install ...`).
+
+The confirmation popup is deliberately left out of the virtualenv: it needs
+the distro's GTK bindings (`python3-gi`), which a virtualenv does not carry,
+so VoxRelay runs it under `/usr/bin/python3`. If your system interpreter
+lives elsewhere, point `dialog_python` in `config/config.toml` at it.
 
 After that, open `config/config.toml` and set at least:
 
@@ -56,6 +111,42 @@ After that, open `config/config.toml` and set at least:
 - `device` / `compute_type`: `"cuda"` / `"float16"` if you have a
   working Nvidia GPU setup, otherwise leave the defaults (`"cpu"` /
   `"int8"`)
+
+## Autostart
+
+To have VoxRelay run in the background and start itself when you log in,
+install the systemd user service shipped with the repository:
+
+```bash
+mkdir -p ~/.config/systemd/user
+sed -e "s|/path/to/VoxRelay|$PWD|g" \
+    -e "s|/path/to/venv|$HOME/.local/share/voxrelay/venv|g" \
+    voxrelay.service.example > ~/.config/systemd/user/voxrelay.service
+systemctl --user daemon-reload
+systemctl --user enable --now voxrelay.service
+```
+
+Useful afterwards:
+
+```bash
+journalctl --user -u voxrelay -f           # watch what it is doing
+systemctl --user restart voxrelay          # reload settings that need a restart
+systemctl --user disable --now voxrelay    # turn autostart off again
+```
+
+Two things in that unit file are worth knowing about, because leaving either
+out works on some desktops and silently breaks on others:
+
+- It is a **user** service, not a system one. VoxRelay needs a graphical
+  session to type into, so starting it at boot would be too early.
+- It sets `DISPLAY` and `XAUTHORITY` explicitly. Several desktops, Cinnamon
+  among them, never activate `graphical-session.target` and never export
+  those variables into the systemd user session.
+
+If something else is using the GPU when VoxRelay starts, loading the model
+fails and systemd retries every 30 seconds until the GPU frees up. Running a
+game and dictating at the same time will not work on a single card unless you
+switch to a smaller model or to CPU.
 
 ## Voice commands
 
@@ -70,13 +161,22 @@ are the same phrase.
 - `voxrelay.py`: the daemon (dictation + voice commands)
 - `dialog.py`: the confirmation/entry popup for voice commands
 - `runner.sh`: runs approved commands inside the persistent terminal
+- `voxrelay.service.example`: systemd user service template, see Autostart
 - `config/`: your personal settings and word lists (gitignored) plus
   `.example` templates (committed)
 - `old/`: earlier reference version, not used by the current code
 
 ## Known limitations
 
-- X11 only, no Wayland support
+- **X11 only, no Wayland support yet.** This rules out desktops that have
+  moved to Wayland only, GNOME 50 among them. Porting it means swapping
+  `xdotool` for `ydotool` (which injects at kernel level through
+  `uinput`, so it works regardless of compositor) and `xclip` for
+  `wl-clipboard`. The clipboard path is the one to use there, because
+  `ydotool` types through a US layout and mangles accented characters.
+  Raising the command terminal to the front has no Wayland equivalent at
+  all, since compositors deliberately forbid it, so that part would
+  simply be dropped.
 - The profanity filter only matches single words, not multi-word
   phrases
 - No automated way yet to discover `keyboard_name`/`key` beyond the
@@ -85,3 +185,7 @@ are the same phrase.
 ## License
 
 MIT, see [LICENSE](LICENSE).
+
+---
+
+Built by [andrashorvath.dev](https://andrashorvath.dev).

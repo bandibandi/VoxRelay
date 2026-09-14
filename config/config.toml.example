@@ -36,6 +36,11 @@ key = "KEY_RIGHTCTRL"
 use_commands = true
 command_key = "KEY_RIGHTALT"
 commands_file = "config/commands.toml"
+# The confirmation popup runs as a separate process and needs the distro's
+# GTK bindings (python3-gi), which a virtualenv does not have. It therefore
+# runs under the system interpreter rather than whichever python3 is first
+# on PATH. Override this only if yours lives somewhere unusual.
+# dialog_python = "/usr/bin/python3"
 
 # --- Text injection ---
 inject_method = "xdotool"
