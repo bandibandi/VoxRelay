@@ -56,6 +56,9 @@ use_blocklist = true
 blocklist = "config/blocklist.txt"
 use_profanity = true
 profanity = "config/profanity.txt"
+# What a matched word is replaced with. Write it in the language you dictate
+# in: this ends up inside your own text.
+censor_text = "[censored]"
 
 # --- Transcript saving ---
 save_transcript = true

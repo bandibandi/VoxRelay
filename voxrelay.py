@@ -231,7 +231,7 @@ class Transcriber:
             if any(pattern and pattern in norm for pattern in patterns):
                 LOG.info("Profanity censored: %r", word)
                 beep("error")
-                words[i] = "[cenzúrázva]"
+                words[i] = CONFIG.get("censor_text", "[censored]")
         return " ".join(words)
 
 
