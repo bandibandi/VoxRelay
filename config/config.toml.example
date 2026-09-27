@@ -6,10 +6,11 @@
 
 # --- Whisper model ---
 model = "large-v3-turbo"
-# "cuda" + "float16" is much faster but needs an Nvidia GPU and the
-# nvidia-* pip packages. Without those, keep "cpu" + "int8".
-device = "cpu"
-compute_type = "int8"
+# Defaults assume an Nvidia GPU with the nvidia-* pip packages installed.
+# Without one, set device = "cpu" and compute_type = "int8": it still works,
+# just far slower. Note that "float16" raises a ValueError on CPU.
+device = "cuda"
+compute_type = "float16"
 offline_mode = false
 # Whisper language code (e.g. "hu", "en"). See dictionary/blocklist/profanity
 # *-hu.example and *-en.example files below for matching content examples.
@@ -43,7 +44,16 @@ commands_file = "config/commands.toml"
 # dialog_python = "/usr/bin/python3"
 
 # --- Text injection ---
-inject_method = "xdotool"
+# "clipboard" pastes in one go with ctrl+v and restores your previous
+# clipboard afterwards. "xdotool" types character by character, which is
+# slow in applications that re-render on every keystroke.
+inject_method = "clipboard"
+# How long to wait before putting your previous clipboard back, in
+# milliseconds. Too low and the application pastes the old contents or
+# nothing at all; a plain text editor needs far less than an Electron
+# app. 0 skips the restore entirely, which costs nothing but loses
+# whatever you had on the clipboard.
+clipboard_restore_ms = 150
 
 # --- Dictionary (initial_prompt) ---
 use_dictionary = true
