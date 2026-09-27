@@ -32,7 +32,7 @@ window {
 }
 
 .icon-badge {
-    background-color: alpha(@theme_selected_bg_color, 0.16);
+    background-color: alpha(#a6e3a1, 0.16);
     border-radius: 999px;
     padding: 7px;
 }
@@ -192,6 +192,11 @@ separator {
 """
 
 
+# The same green as the running tray icon in assets/tray/, so the popup and
+# the panel read as one thing. Deliberately not the GTK accent colour: the
+# mic is a status mark, not a themed control.
+MIC_COLOR = "#a6e3a1"
+
 MIC_SVG = """
 <svg xmlns="http://www.w3.org/2000/svg"
      width="18"
@@ -264,22 +269,9 @@ def styled_label(
     return widget
 
 
-def theme_accent() -> str:
-    found, color = Gtk.Window().get_style_context().lookup_color("theme_selected_bg_color")
-
-    if not found:
-        return "#5e81ac"
-
-    return "#{:02x}{:02x}{:02x}".format(
-        int(color.red * 255),
-        int(color.green * 255),
-        int(color.blue * 255),
-    )
-
-
 def mic_badge() -> Gtk.Box:
     loader = GdkPixbuf.PixbufLoader.new_with_type("svg")
-    loader.write(MIC_SVG.replace("currentColor", theme_accent()).encode("utf-8"))
+    loader.write(MIC_SVG.replace("currentColor", MIC_COLOR).encode("utf-8"))
     loader.close()
 
     badge = Gtk.Box()
@@ -346,7 +338,7 @@ def build(
 
     header.pack_start(icon, False, False, 0)
 
-    title = styled_label("Voice command", "header-title")
+    title = styled_label("VoxRelay command", "header-title")
     title.set_valign(Gtk.Align.CENTER)
 
     header.pack_start(title, False, False, 0)
@@ -367,7 +359,8 @@ def build(
 
     root.pack_start(content, False, False, 0)
 
-    phrase_label = styled_label(phrase, "phrase", wrap=True)
+    # Quoted, so it reads as something that was said, not as a title.
+    phrase_label = styled_label(f"\u201c{phrase}\u201d", "phrase", wrap=True)
     phrase_label.set_margin_top(4)
     phrase_label.set_margin_bottom(22)
 
