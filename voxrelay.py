@@ -238,11 +238,16 @@ class Transcriber:
 
 class Injector:
     def inject(self, text: str) -> None:
-        import subprocess
+        import time
+        started = time.monotonic()
         if CONFIG["inject_method"] == "clipboard":
             self._via_clipboard(text)
         else:
             self._via_xdotool(text)
+        # Worth measuring: xdotool sends one X event per character, so the
+        # cost depends on how fast the receiving window handles keystrokes,
+        # not on anything this process does.
+        LOG.info("Injected %d chars in %.2fs", len(text), time.monotonic() - started)
 
     def _via_xdotool(self, text: str) -> None:
         import subprocess
@@ -251,10 +256,16 @@ class Injector:
     def _via_clipboard(self, text: str) -> None:
         import subprocess
         import time
+        restore_ms = CONFIG.get("clipboard_restore_ms", 250)
         saved = subprocess.run(["xclip", "-selection", "clipboard", "-o"], capture_output=True).stdout
         subprocess.run(["xclip", "-selection", "clipboard"], input=text.encode("utf-8"))
         subprocess.run(["xdotool", "key", "--clearmodifiers", "ctrl+v"])
-        time.sleep(0.25)
+        if not restore_ms:
+            return
+        # X11 hands the clipboard over only when the pasting application asks
+        # the owner for it, which happens after the key is sent. Restoring the
+        # previous contents too early means the application gets those instead.
+        time.sleep(restore_ms / 1000)
         subprocess.run(["xclip", "-selection", "clipboard"], input=saved)
 
 
