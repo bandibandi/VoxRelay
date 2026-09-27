@@ -56,6 +56,12 @@ else
     echo "  MISSING: python3-gi and gir1.2-gtk-3.0, apt install python3-gi gir1.2-gtk-3.0"
 fi
 
+if python3 -c "import gi; gi.require_version('AyatanaAppIndicator3', '0.1')" >/dev/null 2>&1; then
+    echo "  found: gir1.2-ayatanaappindicator3-0.1 (tray icon)"
+else
+    echo "  MISSING: gir1.2-ayatanaappindicator3-0.1, apt install gir1.2-ayatanaappindicator3-0.1 (only needed for the tray icon)"
+fi
+
 if groups "$USER" | grep -qw input; then
     echo "  $USER is in the 'input' group (needed to read the keyboard/button device)"
 else

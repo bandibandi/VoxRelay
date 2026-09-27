@@ -1,0 +1,35 @@
+# Runs the VoxRelay tray icon and starts it automatically when you log in.
+# This is a separate service from voxrelay.service on purpose: the tray is what
+# you use to stop and start the daemon, so it has to stay up while the daemon
+# is down.
+#
+# See the Tray icon section of README.md for the install commands.
+
+[Unit]
+Description=VoxRelay tray icon
+After=default.target
+
+[Service]
+Type=simple
+
+# The system interpreter, not the VoxRelay venv. tray.py needs the distro's GTK
+# bindings (python3-gi) and the Ayatana AppIndicator typelib, which a
+# virtualenv does not have. This is the same reason dialog.py is launched with
+# the system python. No WorkingDirectory is needed: tray.py resolves its own
+# paths from __file__.
+ExecStart=/usr/bin/python3 /path/to/VoxRelay/tray.py
+
+Restart=always
+# The panel's tray applet is not always ready the moment the user session
+# starts, and the indicator then has nothing to attach to. A short delay is
+# enough to get a second attempt in while the desktop is still coming up.
+RestartSec=5
+
+# A tray icon is a graphical client, so it needs the X11 display. Adjust :0 if
+# your display differs, or delete both lines if your session already provides
+# them.
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=%h/.Xauthority
+
+[Install]
+WantedBy=default.target
