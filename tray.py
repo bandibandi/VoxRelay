@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import shutil
 import subprocess
 import sys
+import tomllib
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -23,7 +25,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ICON_PATH = os.path.join(HERE, "assets", "tray")
 ICON_RUNNING = "voxrelay-running"
 ICON_STOPPED = "voxrelay-stopped"
+CONFIG_FILE = os.path.join(HERE, "config", "config.toml")
 TRANSCRIPT_FILE = os.path.join(HERE, "transcript_log.txt")
+
+# A useful subset of what faster-whisper accepts. Picking one rewrites the
+# model line in config.toml and restarts the daemon, which is the only way the
+# setting takes effect. A model you have not used before is downloaded on the
+# first recording after that, so the first one is slow.
+MODELS = ["tiny", "base", "small", "medium", "large-v3", "large-v3-turbo"]
 
 # Label, path. Everything but config.toml is wrapped in a WatchedFile by the
 # daemon and reloads on its own, so only the settings entry warns about the
@@ -44,6 +53,29 @@ def is_running() -> bool:
 
 def systemctl(action: str) -> None:
     subprocess.Popen(["systemctl", "--user", action, SERVICE])
+
+
+def current_model() -> str:
+    try:
+        with open(CONFIG_FILE, "rb") as f:
+            return tomllib.load(f).get("model", "")
+    except (OSError, tomllib.TOMLDecodeError):
+        return ""
+
+
+def set_model(name: str) -> None:
+    # A line rewrite rather than a full parse and dump: tomllib only reads,
+    # and rewriting the file from a parsed dict would throw away every
+    # comment in it.
+    with open(CONFIG_FILE, encoding="utf-8") as f:
+        text = f.read()
+    new, changed = re.subn(r'(?m)^model\s*=\s*".*"$', f'model = "{name}"', text, count=1)
+    if not changed:
+        print(f"No model line in {CONFIG_FILE}", file=sys.stderr)
+        return
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        f.write(new)
+    systemctl("restart")
 
 
 def open_path(path: str) -> None:
@@ -115,6 +147,10 @@ class Tray:
 
         menu.append(Gtk.SeparatorMenuItem())
 
+        model = Gtk.MenuItem(label="Model")
+        model.set_submenu(self._build_model_menu())
+        menu.append(model)
+
         edit = Gtk.MenuItem(label="Edit")
         edit.set_submenu(self._build_edit_menu())
         menu.append(edit)
@@ -135,6 +171,28 @@ class Tray:
             # would open whichever file happened to be last.
             submenu.append(self._item(label, lambda _, path=path: open_path(path)))
         return submenu
+
+    def _build_model_menu(self) -> Gtk.Menu:
+        submenu = Gtk.Menu()
+        active = current_model()
+        group = []
+        for name in MODELS:
+            item = Gtk.RadioMenuItem(label=name)
+            if group:
+                item.join_group(group[0])
+            group.append(item)
+            # Set the state before connecting, otherwise marking the current
+            # model would fire the handler and restart the daemon at startup.
+            item.set_active(name == active)
+            item.connect("toggled", self._on_model, name)
+            submenu.append(item)
+        return submenu
+
+    def _on_model(self, item: Gtk.RadioMenuItem, name: str) -> None:
+        # A radio group fires twice per change, once for the item losing the
+        # selection and once for the one gaining it.
+        if item.get_active() and name != current_model():
+            set_model(name)
 
     def _item(self, label: str, callback) -> Gtk.MenuItem:
         item = Gtk.MenuItem(label=label)
