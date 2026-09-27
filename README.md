@@ -188,6 +188,9 @@ The menu items are:
   whole history, not only the current run.
 - **Transcript log**, which opens `transcript_log.txt`, everything dictated so
   far with timestamps.
+- **Model**, a submenu for the Whisper model. Picking one rewrites
+  `config.toml` and restarts the daemon, and a model you have not used before
+  is downloaded on the first recording after that.
 - **Edit**, a submenu for the settings and the word lists: `config.toml`,
   `dictionary.txt`, `blocklist.txt`, `profanity.txt` and `commands.toml`. Only
   the settings entry is labelled as needing a restart, because the daemon
@@ -198,6 +201,23 @@ The menu items are:
 If the icon never appears, the usual cause is a panel without AppIndicator
 support. Cinnamon and KDE handle these natively; GNOME needs the AppIndicator
 extension.
+
+## Text injection
+
+`inject_method` decides how the transcript reaches the focused window.
+`clipboard` puts it on the clipboard, sends one `ctrl+v` and then restores
+whatever you had there before; `xdotool` types it one character at a time,
+which gets slow in applications that re-render on every keystroke.
+
+The restore is what `clipboard_restore_ms` is for. X11 hands the clipboard
+over only once the pasting application asks for it, so putting your old
+contents back too early means the application gets those instead of the
+transcript. Lower it if the paste feels sluggish, raise it if a paste ever
+comes out empty, or set it to 0 to skip the restore and keep the transcript
+on your clipboard.
+
+The daemon logs how long each injection took, so you can tune the value
+against real numbers rather than guessing.
 
 ## Voice commands
 
