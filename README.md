@@ -6,8 +6,7 @@
 
 **Offline, privacy-first voice dictation and voice commands for Linux.**
 Hold a key, speak, release it, and your words get typed straight into
-the focused window. No cloud, no API keys, no subscription, no audio
-ever leaves your machine.
+the focused window.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
@@ -61,7 +60,8 @@ command execution, runs locally:
 - A custom dictionary to bias transcription toward names, project
   words or jargon it would otherwise mishear
 - A blocklist to drop hallucinated sentences, and a profanity filter
-  that censors individual words instead of dropping the whole sentence
+  that censors individual words instead of dropping the whole sentence,
+  replacing each with `censor_text` from the config
 - Runs fully offline once the model is downloaded
 
 ## Requirements
@@ -70,8 +70,9 @@ command execution, runs locally:
 - Python 3.11+
 - System packages: `xdotool`, `xclip`, `pulseaudio-utils` (for
   `paplay`), `fontconfig`, `python3-gi` + `gir1.2-gtk-3.0` (for the
-  confirmation dialog), and a terminal emulator (`gnome-terminal`,
-  `alacritty`, or anything providing `x-terminal-emulator`)
+  confirmation dialog), `gir1.2-ayatanaappindicator3-0.1` (for the tray
+  icon), and a terminal emulator (`gnome-terminal`, `alacritty`, or
+  anything providing `x-terminal-emulator`)
 - Your user needs to be in the `input` group to read the keyboard
 - An Nvidia GPU is optional; without one, transcription runs on CPU
   (slower, but works)
@@ -152,7 +153,55 @@ fails and systemd retries every 30 seconds until the GPU frees up. Running a
 game and dictating at the same time will not work on a single card unless you
 switch to a smaller model or to CPU.
 
+## Tray icon
+
+`tray.py` puts a microphone icon in the system tray. The icon itself shows
+whether dictation is running, and its menu can stop and start it, follow the
+log, and open the voice command file for editing.
+
+It is a second, separate service, and that is the point: the tray is what you
+use to stop and start the daemon, so it has to stay up while the daemon is
+down.
+
+![The tray menu](assets/screenshot-menu.png)
+
+```bash
+sed "s|/path/to/VoxRelay|$PWD|g" \
+    voxrelay-tray.service.example > ~/.config/systemd/user/voxrelay-tray.service
+systemctl --user daemon-reload
+systemctl --user enable --now voxrelay-tray.service
+```
+
+Note that `ExecStart` there uses `/usr/bin/python3`, not the VoxRelay venv.
+`tray.py` needs the distro's GTK bindings and the Ayatana AppIndicator
+typelib, which a virtualenv does not have, for the same reason `dialog.py` is
+launched with the system interpreter.
+
+The menu items are:
+
+- **Start** / **Stop**, whichever applies. The label and the icon follow the
+  real state of the service, so they also change when you start or stop it
+  from a terminal.
+- **Restart**, for settings that only take effect on a restart.
+- **Show logs**, a terminal following `journalctl --user -u voxrelay`, with a
+  rule drawn before each recording. The journal is persistent, so this is the
+  whole history, not only the current run.
+- **Transcript log**, which opens `transcript_log.txt`, everything dictated so
+  far with timestamps.
+- **Edit**, a submenu for the settings and the word lists: `config.toml`,
+  `dictionary.txt`, `blocklist.txt`, `profanity.txt` and `commands.toml`. Only
+  the settings entry is labelled as needing a restart, because the daemon
+  watches the other four and reloads them on its own when they change.
+- **Open project folder**, in your file manager.
+- **Quit tray**, which closes the icon only and leaves dictation running.
+
+If the icon never appears, the usual cause is a panel without AppIndicator
+support. Cinnamon and KDE handle these natively; GNOME needs the AppIndicator
+extension.
+
 ## Voice commands
+
+![The voice command confirmation](assets/screenshot-dialog.png)
 
 Edit `config/commands.toml` to map spoken phrases to shell commands,
 or just say a phrase that isn't in there yet, the dialog will ask you
@@ -164,11 +213,13 @@ are the same phrase.
 
 - `voxrelay.py`: the daemon (dictation + voice commands)
 - `dialog.py`: the confirmation/entry popup for voice commands
+- `tray.py`: the tray icon and its menu, see Tray icon
 - `runner.sh`: runs approved commands inside the persistent terminal
 - `voxrelay.service.example`: systemd user service template, see Autostart
+- `voxrelay-tray.service.example`: systemd user service template for the
+  tray icon
 - `config/`: your personal settings and word lists (gitignored) plus
   `.example` templates (committed)
-- `old/`: earlier reference version, not used by the current code
 
 ## Known limitations
 
