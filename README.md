@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.jpg" alt="VoxRelay, local push-to-talk dictation and voice commands" width="100%">
+  <img src="assets/banner-voice-typing.jpg" alt="VoxRelay: can't type fast? Talk fast. Offline voice typing for Linux" width="100%">
 </p>
 
 # VoxRelay
