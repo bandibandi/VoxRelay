@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner-voice-typing.jpg" alt="VoxRelay: can't type fast? Talk fast. Offline voice typing for Linux" width="100%">
+  <img src="assets/banner-terminal.jpg" alt="VoxRelay: can't type fast? Talk fast. Offline voice typing for Linux, with a profanity filter" width="100%">
 </p>
 
 # VoxRelay
